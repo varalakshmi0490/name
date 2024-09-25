@@ -1,0 +1,329 @@
+
+
+What is a firewall
+.......................
+
+A firewall is a computer network security system that restricts internet traffic in and out and permits or restricts traffic as configured .
+ While using Linux we have iptables and nftables are firewall programs for linux . It will monitor traffic from and to your server using tables. These tables contain sets of rules, 
+called chains, that will filter incoming and outgoing data packets.
+
+Why do we use Firewall
+..........................
+
+So basically we Use firewall for our security purpose as there are always new threats coming daily which can impact us.
+
+For Self Protection = Firewalls provide protection against outside cyber attackers by shielding your computer from unnecessary network traffic
+
+To Prevent Unauthorized Access = With a correctly configured firewall you should have remote desktop access disabled. This will prevent hackers from secretly taking over your computer
+
+To Monitor Network Traffic = Firewall security starts with effective monitoring of network traffic based on rules and filters to keep the systems protected
+
+To Encourage Privacy = Without a firewall, there would be no way to detect incoming threats. As a result, malicious users may be able to gain access to your devices and thereby compromising privacy.
+
+Features Of Firewall
+.......................
+
+Packet Filtering = the packet filter examines the header of each packet based on a specific set of rules, and on that basis decides to Drop or allow
+
+IDS or Intrusion Prevention System = If any malicious activities found then these events are then reported to the system administrator
+
+Reporting and Storing Logs = to verify and analyze the effects of your firewall rules.
+
+VPN Support = that is designed specifically to protect against unauthorized and malicious users intercepting from internet
+
+NAT = It translates private IP addresses into public IP addresses and allows private IP networks to connect to the internet and hiding the internal network behind the public IP address
+
+How Are Features in Firewall implemented
+............................................
+
+iptables the default tool provided in Linux to establish a firewall to maintain and inspect the tables of IPv4 and IPv6 in the Linux Kernel
+
+Configure Iptable which allows and blocks the traffic with the help of a unique policy chain
+
+Create Rules to DROP , ACCEPT , DELETE and SAVE the Configuration of Firewall
+
+Particular IP address, Port , Range of IP addresses or any packet are triggered using Firewall or Decide the rules over theses specific objects.
+
+Implementing Built-in Firewall UFW frontend of iptables to configure the firewall over command line also
+
+Time Taken ~ 3.5hrs to Read the Chapter and Document learned things
+
+
+
+
+
+
+Varalakshmi  Sagi
+.......................
+Varalakshmi Sagi @p110T23FEB1526 · right now
+Firewall
+
+A firewall is a network security device that monitors incoming and outgoing network traffic and decides whether to allow or block specific traffic based on a defined set of security rules. Firewalls have been a first line of defense in network security for over 25 years.
+
+Features of firewall
+
+Connecting through the internet to different devices is a complicated operation. And unfortunately data breaches can happen at any point during this process — from the code that determines how a page is displayed on a PC or an iPhone, all the way down to the protocol that allows the connection between two machines or web servers.
+
+Firewalls come in all shapes and sizes to protect these points of contact. Here are some firewall examples:
+
+Packet-filtering firewalls
+
+Next-generation firewalls (NGFW)
+
+Proxy firewalls
+
+Network address translation (NAT) firewalls
+
+Stateful multilayer inspection (SMLI) firewalls**
+
+Why do we use firewall
+
+Use a Firewall to Prevent Unauthorized Remote Access
+Firewalls Can Secure Old PCs… Short Term
+Firewalls Make Online Gaming Safer
+You Can Block Unsuitable or Immoral Content With a Firewall
+Firewalls Can Be Hardware or Software
+Implemented of firewall
+
+Configure Network Firewalls to Block Traffic by Default
+Follow the Principle of Least Privilege.
+Specify Source IP Addresses Unless Everyone Needs Access.
+Designate Specific Destination Ports.
+Open the Firewall Ports That Users Expect.
+
+
+
+create and save iptables rule install the iptables-persistent package
+........................................................................
+1. Allowing Established and Related Incoming Connections
+sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+2. Allowing Established Outgoing Connections
+sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+3. Allowing Internal Network to access External
+sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+4. Dropping Invalid Packets
+sudo iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+5. Blocking an IP Address
+sudo iptables -A INPUT -s 203.0.113.51 -j DROP
+6. Allowing Incoming SSH from Specific IP address or subnet
+sudo iptables -A INPUT -p tcp -s 203.0.113.0/24 --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+7. Allowing Outgoing SSH
+sudo iptables -A OUTPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A INPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+8. Allowing Incoming Rsync from Specific IP Address or Subnet
+sudo iptables -A INPUT -p tcp -s 203.0.113.0/24 --dport 873 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 873 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+9. Allowing All Incoming HTTP and HTTPS
+sudo iptables -A INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+10. Allowing MySQL from Specific IP Address or Subnet
+sudo iptables -A INPUT -p tcp -s 203.0.113.0/24 --dport 3306 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 3306 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+11. Allowing MySQL to Specific Network Interface
+sudo iptables -A INPUT -i eth1 -p tcp --dport 3306 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -o eth1 -p tcp --sport 3306 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+12.  PostgreSQL from Specific IP Address or Subnet
+sudo iptables -A INPUT -p tcp -s 203.0.113.0/24 --dport 5432 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 5432 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+13. Allowing PostgreSQL to Specific Network Interface
+sudo iptables -A INPUT -i eth1 -p tcp --dport 5432 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -o eth1 -p tcp --sport 5432 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+14. Blocking Outgoing SMTP Mail
+sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
+15. Allowing All Incoming SMTP
+sudo iptables -A INPUT -p tcp --dport 25 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 25 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+16. Allowing All Incoming IMAP
+sudo iptables -A INPUT -p tcp --dport 143 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 143 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+17. Allowing All Incoming POP3
+sudo iptables -A INPUT -p tcp --dport 110 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 110 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+18.Allowing All Incoming POP3S
+sudo iptables -A INPUT -p tcp --dport 995 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 995 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
+
+
+
+
+Implementation of firewall using nftables
+............................................
+
+
+Allowing Established and Related Incoming Connections
+  sudo nft add rule ip filter INPUT ct state related,established counter accept
+
+
+Allowing Established Outgoing Connections
+  sudo nft add rule ip filter OUTPUT ct state established counter accept
+
+
+Allowing Internal Network to access External
+  sudo nft add rule ip filter FORWARD iifname "eth1" oifname "eth0" counter accept
+
+
+Dropping Invalid Packets
+ sudo nft add rule ip filter INPUT ct state invalid counter drop
+
+
+Blocking an IP Address
+ sudo nft add rule ip filter INPUT ip saddr <IP Address> counter drop
+
+
+Allowing Incoming SSH from Specific IP address or subnet
+sudo nft add rule ip filter INPUT ip saddr <Subnet> tcp dport 22 ct state new,established counter accept
+
+sudo nft add rule ip filter OUTPUT tcp sport 22 ct state established counter accept
+
+
+Allowing Outgoing SSH
+ sudo nft add rule ip filter OUTPUT tcp sport 22 ct state established counter accept
+
+ sudo nft add rule ip filter INPUT tcp sport 22 ct state established counter accept
+
+
+Allowing Incoming Rsync from Specific IP Address or Subnet
+  sudo nft add rule ip filter INPUT ip saddr <Subnet> tcp dport 873 ct state new,established counter accept
+
+  sudo nft add rule ip filter OUTPUT tcp sport 873 ct state established counter accept
+
+
+Allowing All Incoming HTTP and HTTPS
+  sudo nft add rule ip filter INPUT tcp dport 80,443 ct state new,established counter accept
+
+  sudo nft add rule ip filter OUTPUT tcp sport 80,443 ct state established counter accept
+
+
+Allowing MySQL from Specific IP Address or Subnet
+ sudo nft add rule ip filter INPUT ip saddr <Subnet> tcp dport 3306 ct state new,established counter accept
+
+ sudo nft add rule ip filter OUTPUT tcp sport 3306 ct state established counter accept
+
+
+Allowing MySQL to Specific Network Interface
+ sudo nft add rule ip filter INPUT iifname "eth1" tcp dport 3306 ct state new,established counter accept
+
+ sudo nft add rule ip filter OUTPUT oifname "eth1" tcp sport 3306 ct state established counter accept
+
+
+PostgreSQL from Specific IP Address or Subnet
+  sudo nft add rule ip filter INPUT ip saddr <Subnet> tcp dport 5434 ct state new,established counter accept
+
+ sudo nft add rule ip filter OUTPUT tcp sport 5434 ct state established counter accept
+
+
+Allowing PostgreSQL to Specific Network Interface
+ sudo nft add rule ip filter INPUT iifname "eth1" tcp dport 5434 ct state new,established counter accept
+
+ sudo nft add rule ip filter OUTPUT oifname "eth1" tcp sport 5434 ct state established counter accept
+
+
+Blocking Outgoing SMTP Mail
+ sudo nft add rule ip filter OUTPUT tcp dport 25 counter reject
+
+
+Allowing All Incoming SMTP
+ sudo nft add rule ip filter INPUT tcp dport 25 ct state new,established counter accept
+
+ sudo nft add rule ip filter OUTPUT tcp sport 25 ct state established counter accept
+
+
+Allowing All Incoming IMAP
+  sudo nft add rule ip filter INPUT tcp dport 143 ct state new,established counter accept
+
+  sudo nft add rule ip filter OUTPUT tcp sport 143 ct state established counter accept
+
+
+Allowing All Incoming POP3
+  sudo nft add rule ip filter INPUT tcp dport 110 ct state new,established counter accept
+
+  sudo nft add rule ip filter OUTPUT tcp sport 110 ct state established counter accept
+
+
+Allowing All Incoming POP3S
+ sudo nft add rule ip filter INPUT tcp dport 995 ct state new,established counter accept
+
+ sudo nft add rule ip filter OUTPUT tcp sport 995 ct state established counter accept
+
+
+
+
+## Implementation of firewall using iptables on BrainyPi
+............................................................
+
+1. Allowing Established and Related Incoming Connections
+sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+2.   Allowing Established Outgoing Connections
+sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+3.  Allowing Internal Network to access External
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+4.  Dropping Invalid Packets
+sudo iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+5.  Blocking an IP Address
+sudo iptables -A INPUT -s 192.168.50.12 -j DROP
+6.  Allowing Incoming SSH from Specific IP address or subnet
+sudo iptables -A INPUT -p tcp -s 192.168.50.12 --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+7.  Allowing Outgoing SSH
+sudo iptables -A OUTPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+8.  Allowing Incoming Rsync from Specific IP Address or Subnet
+sudo iptables -A INPUT -p tcp -s 192.168.50.12 --dport 873 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 873 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+9.  Allowing All Incoming HTTP and HTTPS
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+10.  Allowing MySQL from Specific IP Address or Subnet
+sudo iptables -A INPUT -p tcp -s 192.168.50.12 --dport 3306 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 3306 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+11. Allowing MySQL to Specific Network Interface
+sudo iptables -A INPUT -i eth1 -p tcp --dport 3306 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -o eth1 -p tcp --sport 3306 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+12. PostgreSQL from Specific IP Address or Subnet
+sudo iptables -A INPUT -p tcp -s 192.168.50.12 --dport 5432 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 5432 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+13. Allowing PostgreSQL to Specific Network Interface
+sudo iptables -A INPUT -i eth1 -p tcp --dport 5432 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -o eth1 -p tcp --sport 5432 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+14. Blocking Outgoing SMTP Mail
+iptables -A OUTPUT -p tcp --dport 25 -j DROP
+15. Allowing All Incoming SMTP
+sudo iptables -A INPUT -p tcp --dport 25 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+16. Allowing All Incoming IMAP
+sudo iptables -A INPUT -p tcp --dport 143 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+17. Allowing All Incoming POP3
+sudo iptables -A INPUT -p tcp --dport 110 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+18.  Allowing All Incoming POP3S
+sudo iptables -A INPUT -p tcp --dport 995 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

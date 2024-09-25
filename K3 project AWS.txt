@@ -1,0 +1,249 @@
+
+
+
+HA cluster with K3s and longhorn over AWS EC2 Instances
+..............................................................
+
+
+What is HA k3s?
+.........................
+K3s is a lightweight, certified Kubernetes distribution designed for use in resource-constrained environments, such as edge computing, IoT, and small-scale production environments. It was developed by Rancher Labs and is open source software.
+
+K3s is intended to have a tiny footprint, few dependencies, and be simple to administer. It has everything required for a Kubernetes cluster, including the kubelet, etcd, and the control plane for Kubernetes. K3s, on the other hand, has a lower memory and disc footprint than a full Kubernetes distribution and is designed for resource-constrained situations.
+With built-in TLS encryption, RBAC, and a read-only filesystem, K3s is also incredibly secure. Further features like automated upgrades, internal load balancing, and a quicker installation procedure are included to make managing and running the cluster easier.
+
+What is HA(High Availability) k3s cluster?
+.................................................
+In an HA K3s cluster, multiple master nodes are deployed to provide redundancy for the Kubernetes control plane, which ensures that the cluster remains operational even if one or more master nodes become unavailable.
+
+In an HA K3s cluster, multiple master nodes are configured to work together as a single Kubernetes control plane. Each master node runs a copy of etcd, a distributed key-value store used by Kubernetes for storing cluster state.
+
+The master nodes use an internal load balancer to distribute incoming requests from Kubernetes clients, such as kubectl, to the active master node.
+Additionally, an HA K3s cluster can also include multiple worker nodes, providing further resiliency and redundancy. If one worker node becomes unavailable, the Kubernetes scheduler can automatically reschedule any affected workloads to run on other available worker nodes.
+HA-K3s cluster Architecture
+
+how-it-works-k3s-revised-9c025ef482404bca2e53a89a0ba7a3c5.svg
+
+A server node is defined as a host running the k3s server command, with control-plane and datastore components managed by K3s.
+An agent node is defined as a host running the k3s agent command, without any datastore or control-plane components.
+Both servers and agents run the kubelet, container runtime, and CNI. See the Advanced Options documentation for more information on running agentless servers.
+Creating HA-K3s clustering over AWS EC2-instances and longhorn
+
+
+
+1. Setting up Instances
+I will be using 6 instances to set-up the cluster 3 as master node, and other 3 as a worker node.
+
+Machine Image: Ubuntu server Ubuntu 22.04 LTS
+Architecture: 64-bit(x86)
+Instance type: t2.medium | 2 vcpu | 4 GiB memory
+Number of instance:- 6
+Network Setting:- Allow all the traffic
+Configure Storage:- 10 GiB | gp2
+Also I had renamed the all instances as per there work i.e. master node and worker node, as you can see below.
+
+Screenshot__112_
+
+Screenshot__113_
+
+Screenshot__114_
+
+Screenshot__115_
+
+Screenshot__116_
+
+Now, I need to edit security group and make some changes over there so all instances have connectivity between them, follow the steps below to edit and add security group.
+
+Click on the security option and then security group as shown below.
+
+Screenshot_2023-03-16_111437
+
+Now edit the Inbound rules, you can see inbound rules at the bottom.
+
+Now add new group, we following rules.
+
+
+Type:- All traffic
+Protocol:- All
+Protocol Range:- All
+Source:- Anywhere IPv4
+Save it. Screenshot_2023-03-16_111747
+
+Now check every instance if rule is successfully configured or not, if yes reboot all the instances.
+
+Now everything is all set for the instances, next step is to configure cluster and set-up master and worker nodes.
+
+2. Configuring cluster and setting up master and worker nodes
+Configuring 1st Master node
+
+Connect to the 1st master node through AWS only, no need to use putty or anything.
+
+Now as you login change the user to root and update the system using below command.
+
+sudo su -
+apt-get update
+Screenshot_2023-03-16_113401
+
+Now, run the below command to configure the 1st master node
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.26.2+k3s1" sh -s - server --token=dfXagzaueZM8Ye --cluster-init
+Screenshot_2023-03-16_114106
+
+Also run kubectl get nodes command to verify if node is configure or not as shown above.
+
+Configuring 2nd master node
+
+Connect 2nd master node instance through AWS, and login in root user and update is same as told before.
+Now to configure 2nd master node use below command.
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.26.2+k3s1" sh -s - server --server https://172.31.42.246:6443  --token=dfXagzaueZM8Ye
+Remember to change the Ip with your instance Ip.
+
+Screenshot_2023-03-16_114648
+
+Now you can see both the nodes are configured successfully.
+
+Now to configure the 3rd master node follow the same steps done for the 2nd master node.
+
+Command
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.26.2+k3s1" sh -s - server --server https://172.31.42.246:6443  --token=dfXagzaueZM8Ye
+Screenshot_2023-03-16_115030
+
+Configuring 1st worker node
+
+Connect 1st worker node instance throught AWS, and login in root user and update is same as told before.
+
+Now to configure 1st worker node use below command.
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.26.2+k3s1" sh -s - agent --server https://172.31.42.246:6443 --token=dfXagzaueZM8Ye
+Screenshot_2023-03-16_115403
+
+Now our 1st worker node is also configured.
+Configuring 2nd and 3rd worker node
+
+To configure the 2nd and 3rd worker node follow the same steps as for 1st worker node, but just remember to modify commands as follows.
+
+For 2nd worker node
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.26.2+k3s1" sh -s - agent --server https://172.31.42.246:6443 --token=dfXagzaueZM8Ye
+For 3rd worker node
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.26.2+k3s1" sh -s - agent --server https://172.31.42.246:6443 --token=dfXagzaueZM8Ye
+Once all nodes are configured use Kubectl get nodes command to verify if all nodes are configured or not.
+
+Screenshot_2023-03-16_115808
+
+As you can see now all the nodes are successfully configured.
+
+Next step is to configure longhorn.
+
+Deploying Longhorn
+What is Longhorn?
+In a Kubernetes cluster, Longhorn is a distributed block storage system that provides persistent storage for stateful applications running in the cluster.
+It is an open-source project developed by Rancher Labs and donated to the Cloud Native Computing Foundation (CNCF) to become a sandbox project.
+Longhorn operates as a containerized application within the Kubernetes cluster, and it creates a network of replicas that store and manage the data. The replicas are automatically distributed across the nodes in the cluster, ensuring high availability and fault tolerance.
+Longhorn provides several features, including snapshots, backup and restore, and disaster recovery. It also supports features like volume expansion and migration, enabling applications to scale as needed and migrate between clusters or cloud providers.
+Installing Longhorn
+Install iscsi
+sudo apt-get install open-iscsi
+Screenshot_2023-03-16_120718
+
+Install helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+Screenshot_2023-03-16_120831
+
+Install jq
+apt install jq -y
+Screenshot_2023-03-16_121014
+
+Configure Kubeconfig variable
+sudo cp -arv /etc/rancher/k3s/k3s.yaml ./
+sudo chmod 777 /etc/rancher/k3s/k3s.yaml
+export KUBECONFIG=./k3s.yaml
+Screenshot_2023-03-16_121147
+
+Check if cluster ready for longhorn deployment
+curl https://raw.githubusercontent.com/longhorn/longhorn/v1.1.2/scripts/environment_check.sh | sudo bash
+Screenshot_2023-03-16_121328
+
+Deploy longhorn by adding it to helm
+helm repo add longhorn https://charts.longhorn.io
+helm repo update
+
+kubectl create namespace longhorn-system
+helm upgrade -i longhorn longhorn/longhorn --namespace longhorn-system
+Screenshot_2023-03-16_121446
+
+Wait for some time and check if all pods are running under the longhorn namespace
+kubectl get pods -n longhorn-system
+Screenshot_2023-03-16_121737
+
+Longhorn Deployed sucessfully
+
+Deploying Wordpress
+Create folder and download deployment yamls.
+
+mkdir -p wp
+cd wp
+curl -LO https://k8s.io/examples/application/wordpress/mysql-deployment.yaml
+curl -LO https://k8s.io/examples/application/wordpress/wordpress-deployment.yaml
+Screenshot_2023-03-16_122943
+
+Configuring PVC (Persistent Volume Claim) for MySQL & WordPress
+
+Mentioning name of the storage class, the MySQL PVC and WordPress PVC should use:
+
+MySQL PVC
+
+Screenshot_2023-03-16_123404
+
+WordPress PVC
+
+Screenshot_2023-03-16_123656
+
+Create a ./kustomization.yaml
+
+Screenshot_2023-03-16_123634
+
+To deploy run the command
+
+sudo kubectl apply -k ./
+Screenshot_2023-03-16_123811
+
+Check if the wordpress is deployed
+Run command sudo kubectl get secrets
+
+Screenshot_2023-03-16_124441
+
+Run command sudo kubectl get pvc
+
+Screenshot_2023-03-16_124551
+
+Run command sudo kubectl get pods -A
+
+Screenshot_2023-03-16_124720
+
+It should show wordpress and wordpress-mysql pods Running.
+Run sudo kubectl get deployments to check deployments
+
+Screenshot_2023-03-16_124944
+
+Run  sudo kubectl get svc to the resources are up and in running state.
+
+Screenshot_2023-03-16_125108
+
+Run command sudo kubectl get service wordpress
+
+Screenshot_2023-03-16_125217
+
+Testing Wordpress
+Go the site http://VIRTUAL_IP:PORT , in our case http://public_ip_of_node:31870
+
+Screenshot_2023-03-16_125444
+
+Screenshot_2023-03-16_125604
+
+Screenshot_2023-03-16_125737
+
+Hence, wordpress is also deployed successfully
+Edited by Tousif Inamdar 2 months ago

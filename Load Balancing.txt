@@ -1,0 +1,436 @@
+
+Varalakshmi  Sagi
+Varalakshmi Sagi @p110T23FEB1526
+
+ 
+Load balancing
+...................
+
+refers to efficiently distributing incoming network traffic across a group of backend servers, also known as a server farm or server pool. Modern high‑traffic websites must serve hundreds of thousands, if not millions, of concurrent requests from users or clients and return the correct text, images, video, or application data, all in a fast and reliable manner. To cost‑effectively scale to meet these high volumes, modern computing best practice generally requires adding more servers.
+
+A load balancer acts as the “traffic cop” sitting in front of your servers and routing client requests across all servers capable of fulfilling those requests in a manner that maximizes speed and capacity utilization and ensures that no one server is overworked, which could degrade performance. If a single server goes down, the load balancer redirects traffic to the remaining online servers. When a new server is added to the server group, the load balancer automatically starts to send requests to it.
+
+In this manner, a load balancer performs the following functions:
+
+Distributes client requests or network load efficiently across multiple servers
+Ensures high availability and reliability by sending requests only to servers that are online
+Provides the flexibility to add or subtract servers as demand dictates image
+load balancing diagram
+
+Load Balancing Algorithms
+..........................
+
+Different load balancing algorithms provide different benefits; the choice of load balancing method depends on your needs:
+
+Round Robin – Requests are distributed across the group of servers sequentially.
+
+Least Connections – A new request is sent to the server with the fewest current connections to clients. The relative computing capacity of each server is factored into determining which one has the least connections.
+
+Least Time – Sends requests to the server selected by a formula that combines the fastest response time and fewest active connections. Exclusive to NGINX Plus.
+
+Hash – Distributes requests based on a key you define, such as the client IP address or the request URL. NGINX Plus can optionally apply a consistent hash to minimize redistribution of loads if the set of upstream servers changes.
+
+IP Hash – The IP address of the client is used to determine which server receives the request.
+
+Random with Two Choices – Picks two servers at random and sends the request to the one that is selected by then applying the Least Connections algorithm (or for NGINX Plus the Least Time algorithm, if so configured).
+
+Some of the key features of load balancers include:
+
+Traffic distribution: Load balancers distribute traffic across multiple servers, making it possible to optimize performance and availability.
+
+Health monitoring: Load balancers can monitor the health of individual servers and automatically route traffic to the healthy ones.
+
+SSL termination: Load balancers can terminate SSL connections, making it possible to offload SSL processing from individual servers and improving overall performance.
+
+Session persistence Load balancers can also ensure that a user's session is maintained with the same server for the duration of the session, ensuring that the user's data is not lost during the session.
+
+Content caching: Load balancers can cache frequently accessed content, reducing the need for servers to generate content for each request and improving overall performance.
+
+
+
+
+Implement HAproxy for Load Balancing Wordpress application
+...........................................................
+
+Overview
+...............
+We type the public ip of load balancer and the load balancer returns one of the websites that are hosted in the backend.
+
+Prerequisites
+
+I have created three VMs on AWS.
+
+Loadbalancer: The first vm is loadbalancer we will configure HAproxy on this vm. After configuring it we can search the wordpress sites by searching the public ip of this loadbalancer.
+Server1(named as lamp1): The second vm is a gym website built on wordpress. I am hosting this site using apache2.
+Server2(named as lamp2): The third vm is a junk food website built on wordpress. I am hosting this site using apache2.
+Installing HAProxy
+Use the apt-get command to install HAProxy.
+
+apt-get install haproxy
+We need to enable HAProxy to be started by the init script.
+
+nano /etc/default/haproxy
+Set the ENABLED option to 1
+
+ENABLED=1
+To check if this change is done properly execute the init script of HAProxy without any parameters. You should see the following.
+
+root@haproxy:~# service haproxy
+Usage: /etc/init.d/haproxy {start|stop|reload|restart|status}
+Configuring HAProxy
+We’ll move the default configuration file and create our own one.
+
+mv /etc/haproxy/haproxy.cfg{,.original}
+Create and edit a new configuration file:
+
+nano /etc/haproxy/haproxy.cfg
+Let us begin by adding configuration block by block to this file:
+
+global
+	log 127.0.0.1 local0 notice
+	maxconn 2000
+	user haproxy
+	group haproxy
+defaults
+	log     global
+	mode    http
+	option  httplog
+	option  dontlognull
+	retries 3
+	option redispatch
+	timeout connect  5000
+	timeout client  10000
+	timeout server  10000
+listen appname 
+        bind *:80
+	mode http
+	stats enable
+	stats uri /haproxy?stats
+	stats realm Strictly\ Private
+	balance roundrobin
+	option httpclose
+	option forwardfor
+	server lamp1 <private_ip_of_server1>:80 check
+	server lamp2 <private_ip_of_server2>:80 check
+pic1
+
+Installing k6
+For installing k6 on ubuntu first we need to configure its package repository as ubuntu does not provide it by default. For configuring it we will use following command.
+
+$ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 379CE192D401AB61
+$ echo "deb https://dl.bintray.com/loadimpact/deb stable main" | sudo tee -a /etc/apt/sources.list
+As now package repository is installed next step we will install the k6 using following command.
+
+$ sudo apt-get update
+$ sudo apt-get install k6
+Now, as our k6 is install we will create some script file to test the load balancer using following commands and adding following content in it.
+
+$ vim script.js
+And add the following content,
+
+import http from 'k6/http';
+import { sleep } from 'k6';
+export default function() {
+  http.get('http://192.168.0.104/');
+  sleep(1);
+}
+Here in my case Ip is 192.168.0.104 it might be different for you.
+Now run the script file using following command,
+
+k6 run script.js
+
+
+
+
+
+
+
+
+
+
+
+
+
+Goal: Implement Nginx as a load balancer for WordPress application
+....................................................................
+
+Prerequisites:
+
+Three VMs (Two for web servers and one for load balancer)
+WordPress installed on both web servers
+
+Here are the steps to implement Nginx for load balancing a WordPress application:
+
+Create two virtual machines (VMs) on your laptop. You can use any virtualization software such as VirtualBox or VMware to create these VMs.
+Install WordPress on both the VMs. You can use any method to install WordPress such as manual installation or using a package manager like apt or yum.
+Install Nginx on a third VM or one of the existing VMs. To install Nginx on Ubuntu, you can run the following commands:
+
+Install Nginx on Load Balancer Host
+First, you will need to install the Nginx server on the Load Balancer host. You can install it by running the following command:
+     apt-get install nginx -y
+Once the Nginx has been installed, start the Nginx service and enable it to start at system reboot:
+   systemctl start nginx
+   systemctl enable nginx
+Now, you can verify the status of the Nginx service using the following command:
+  systemctl status nginx
+If everything is fine, you will get the following output:
+nginx.service - A high performance web server and a reverse proxy server
+Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+Active: active (running) UTC; 26s ago
+Docs: man:nginx(8)
+Process: 62622 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+Process: 62623 ExecStart=/usr/sbin/nginx -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+Main PID: 62716 (nginx)
+Tasks: 2 (limit: 1041)
+Memory: 3.9M
+CGroup: /system.slice/nginx.service
+├─62716 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+└─62719 nginx: worker process
+ubuntu systemd[1]: Starting A high performance web server and a reverse proxy server.
+ubuntu systemd[1]: Started A high performance web server and a reverse proxy server.
+By default, Nginx web server listens on port 80. You can check it by running the following command:
+   ss -antpl
+You should see the Nginx port 80 in the following output:
+State     Recv-Q    Send-Q       Local Address:Port         Peer Address:Port    Process
+LISTEN    0         511                0.0.0.0:80                0.0.0.0:*        users:(("nginx",pid=62719,fd=6),("nginx",pid=62716,fd=6))
+LISTEN    0         4096         127.0.0.53%lo:53                0.0.0.0:*        users:(("systemd-resolve",pid=62850,fd=13))
+LISTEN    0         128                0.0.0.0:22                0.0.0.0:*        users:(("sshd",pid=62835,fd=3))
+LISTEN    0         511                   [::]:80                   [::]:*        users:(("nginx",pid=62719,fd=7),("nginx",pid=62716,fd=7))
+LISTEN    0         128                   [::]:22                   [::]:*        users:(("sshd",pid=62835,fd=4))
+Now, open your web browser and verify the Nginx test page using the URL http://192.168.0.10. You should see the Nginx test page in the following screen:
+
+
+
+
+
+
+
+Goal: Implement Traefik for Loading balancing Wordpress application
+......................................................................
+
+Introduction to Traefik
+...............................
+Traefik is a modern and dynamic reverse proxy and load balancer that provides automatic discovery and configuration for microservices architecture. It is open-source, designed for simplicity and ease of use, and works seamlessly with popular container orchestration platforms like Kubernetes, Docker Swarm, and Mesos.
+
+Install Docker Engine on Ubuntu
+
+To get started with Docker Engine on Ubuntu, make sure you meet the prerequisites, and then follow the installation steps. Prerequisites OS requirements
+
+To install Docker Engine, you need the 64-bit version of one of these Ubuntu versions:
+
+Ubuntu Kinetic 22.10
+Ubuntu Jammy 22.04 (LTS)
+Ubuntu Focal 20.04 (LTS)
+Ubuntu Bionic 18.04 (LTS)
+Docker Engine is compatible with x86_64 (or amd64), armhf, arm64, and s390x architectures. Uninstall old versions
+
+Older versions of Docker went by the names of docker, docker.io, or docker-engine, you might also have installations of containerd or runc. Uninstall any such older versions before attempting to install a new version:
+
+sudo apt-get remove docker docker-engine docker.io containerd runc
+
+apt-get might report that you have none of these packages installed.
+
+Images, containers, volumes, and networks stored in /var/lib/docker/ aren’t automatically removed when you uninstall Docker. If you want to start with a clean installation, and prefer to clean up any existing data, read the uninstall Docker Engine section. Installation methods
+
+You can install Docker Engine in different ways, depending on your needs:
+
+Docker Engine comes bundled with Docker Desktop for Linux. This is the easiest and quickest way to get started.
+
+Set up and install Docker Engine from Docker’s apt repository.
+
+Install it manually and manage upgrades manually.
+
+Use a convenience scripts. Only recommended for testing and development environments.
+Install using the apt repository
+
+Before you install Docker Engine for the first time on a new host machine, you need to set up the Docker repository. Afterward, you can install and update Docker from the repository. Set up the repository
+
+Update the apt package index and install packages to allow apt to use a repository over HTTPS:
+sudo apt-get update
+
+sudo apt-get install
+ca-certificates
+curl
+gnupg
+
+Add Docker’s official GPG key:
+
+sudo mkdir -m 0755 -p /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+Use the following command to set up the repository:
+
+ echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+Install Docker Engine
+
+Update the apt package index:
+sudo apt-get update
+
+Receiving a GPG error when running apt-get update?
+
+Your default umask may be incorrectly configured, preventing detection of the repository public key file. Try granting read permission for the Docker public key file before updating the package index:
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+ sudo apt-get update
+Install Docker Engine, containerd, and Docker Compose.
+
+Latest
+Specific version
+To install the latest version, run:
+
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+Verify that the Docker Engine installation is successful by running the hello-world image:
+
+ sudo docker run hello-world
+
+This command downloads a test image and runs it in a container. When the container runs, it prints a confirmation message and exits.
+You have now successfully installed and started Docker Engine. The docker user group exists but contains no users, which is why you’re required to use sudo to run Docker commands. Continue to Linux post-install to allow non-privileged users to run Docker commands and for other optional configuration steps. Upgrade Docker Engine
+
+To upgrade Docker Engine, follow the installation instructions, choosing the new version you want to install. Install from a package
+
+If you can’t use Docker’s apt repository to install Docker Engine, you can download the deb file for your release and install it manually. You need to download a new file each time you want to upgrade Docker Engine.
+
+Go to https://download.docker.com/linux/ubuntu/dists/.
+
+Select your Ubuntu version in the list.
+
+Go to pool/stable/ and select the applicable architecture (amd64, armhf, arm64, or s390x).
+
+Download the following deb files for the Docker Engine, CLI, containerd, and Docker Compose packages:
+    containerd.io_<version>_<arch>.deb
+    docker-ce_<version>_<arch>.deb
+    docker-ce-cli_<version>_<arch>.deb
+    docker-buildx-plugin_<version>_<arch>.deb
+    docker-compose-plugin_<version>_<arch>.deb
+
+Install the .deb packages. Update the paths in the following example to where you downloaded the Docker packages.
+sudo dpkg -i ./containerd.io_.deb
+./docker-ce.deb
+./docker-ce-cli.deb
+./docker-buildx-plugin.deb
+./docker-compose-plugin_.deb
+
+The Docker daemon starts automatically.
+
+Verify that the Docker Engine installation is successful by running the hello-world image:
+
+sudo service docker start
+
+ sudo docker run hello-world
+
+This command downloads a test image and runs it in a container. When the container runs, it prints a confirmation message and exits.
+You have now successfully installed and started Docker Engine. The docker user group exists but contains no users, which is why you’re required to use sudo to run Docker commands. Read Linux post-install to allow non-privileged users to run Docker commands and for other optional configuration steps. Upgrade Docker Engine
+
+To upgrade Docker Engine, download the newer package files and repeat the installation procedure, pointing to the new files. Install using the convenience script
+
+Docker provides a convenience script at https://get.docker.com/ to install Docker into development environments non-interactively. The convenience script isn’t recommended for production environments, but it’s useful for creating a provisioning script tailored to your needs. Also refer to the install using the repository steps to learn about installation steps to install using the package repository. The source code for the script is open source, and you can find it in the docker-install repository on GitHub.
+
+Always examine scripts downloaded from the internet before running them locally. Before installing, make yourself familiar with potential risks and limitations of the convenience script:
+
+The script requires root or sudo privileges to run.
+The script attempts to detect your Linux distribution and version and configure your package management system for you.
+The script doesn’t allow you to customize most installation parameters.
+The script installs dependencies and recommendations without asking for confirmation. This may install a large number of packages, depending on the current configuration of your host machine.
+By default, the script installs the latest stable release of Docker, containerd, and runc. When using this script to provision a machine, this may result in unexpected major version upgrades of Docker. Always test upgrades in a test environment before deploying to your production systems.
+The script isn’t designed to upgrade an existing Docker installation. When using the script to update an existing installation, dependencies may not be updated to the expected version, resulting in outdated versions.
+
+Tip: preview script steps before running
+
+You can run the script with the --dry-run option to learn what steps the script will run when invoked:
+curl -fsSL https://get.docker.com -o get-docker.sh
+
+ sudo sh ./get-docker.sh --dry-run
+This example downloads the script from https://get.docker.com/ and runs it to install the latest stable release of Docker on Linux:
+
+curl -fsSL https://get.docker.com -o get-docker.sh
+
+sudo sh get-docker.sh
+
+You have now successfully installed and started Docker Engine. The docker service starts automatically on Debian based distributions. On RPM based distributions, such as CentOS, Fedora, RHEL or SLES, you need to start it manually using the appropriate systemctl or service command. As the message indicates, non-root users can’t run Docker commands by default.
+
+Use Docker as a non-privileged user, or install in rootless mode?
+
+The installation script requires root or sudo privileges to install and use Docker. If you want to grant non-root users access to Docker, refer to the post-installation steps for Linux. You can also install Docker without root privileges, or configured to run in rootless mode. For instructions on running Docker in rootless mode, refer to run the Docker daemon as a non-root user (rootless mode).
+Install pre-releases
+
+Docker also provides a convenience script at https://test.docker.com/ to install pre-releases of Docker on Linux. This script is equal to the script at get.docker.com, but configures your package manager to use the test channel of the Docker package repository. The test channel includes both stable and pre-releases (beta versions, release-candidates) of Docker. Use this script to get early access to new releases, and to evaluate them in a testing environment before they’re released as stable.
+
+To install the latest version of Docker on Linux from the test channel, run:
+
+curl -fsSL https://test.docker.com -o test-docker.sh
+
+sudo sh test-docker.sh
+
+Upgrade Docker after using the convenience script
+
+If you installed Docker using the convenience script, you should upgrade Docker using your package manager directly. There’s no advantage to re-running the convenience script. Re-running it can cause issues if it attempts to re-install repositories which already exist on the host machine. Uninstall Docker Engine
+
+Uninstall the Docker Engine, CLI, containerd, and Docker Compose packages:
+sudo apt-get purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+
+Images, containers, volumes, or custom configuration files on your host aren’t automatically removed. To delete all images, containers, and volumes:
+
+sudo rm -rf /var/lib/docker
+
+ sudo rm -rf /var/lib/containerd
+You have to delete any edited configuration files manually.
+
+
+
+
+Imlementing Nginx for Loading balancing on BrainyPi
+.......................................................
+
+When we are successfully logged, the next step is to deploy 2 WordPress instances on Docker in BrainyPi
+Step 1: Install docker or check if if already exists
+docker --version
+If not then install docker first
+sudo apt-get update
+sudo apt-get install docker.io
+
+Step 2: download the WordPress image
+sudo docker pull wordpress
+Create two directories for the WordPress instances
+sudo mkdir -p /var/www/icwordpress1/html
+
+sudo mkdir -p /var/www/icwordpress2/html
+Start the first WordPress instance
+sudo docker run -d --name icwordpress1 -p 8888:80 -v /var/www/icwordpress1/html:/var/www/html wordpress
+Start the second WordPress instance
+sudo docker run -d --name icwordpress2 -p 8889:80 -v /var/www/icwordpress2/html:/var/www/html wordpress
+Step 3 :Check that the WordPress instances are running
+sudo docker ps
+
+
+we should see two containers running, one for each WordPress instance.
+Step 4: Install or Check the Nginx if there in the system or not
+sudo nginx -v
+if not there install it by
+sudo apt-get install nginx
+Step 5: Open the configuration file for nginx to add the server ip address and port in which our image will run
+sudo nano /etc/nginx/nginx.conf
+127.0.0.1:8888 is the subnet for our wordpress1
+127.0.0.1:8889 is the subnet for our wordpress2
+You can change the here with port i have used the localhost ip of brainypi
+Step 6: Test the configuration
+sudo nginx -t
+
+To open the instance running in browser type "127.0.0.1:9888" and in other browser type "127.0.0.1:9889"
+
+
+
+
+
+
+
+
+
+
+
+
+

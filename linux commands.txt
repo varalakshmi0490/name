@@ -1,0 +1,168 @@
+linux commands(basic)
+.....................
+
+
+1. pwd- present working directory
+
+2. ls - lists all files 
+
+3. ls-a - Hidden files
+
+4. cd - change directory
+
+5. mkdir - create a folder or a directory
+
+6. rmdir- delete a directory
+
+7. rm - deletes a  directory containing files 
+
+8. rm-r - deletes just the directory
+
+9. touch - create a file it can be anything, from an empty . txt file 
+to an empty zip file .
+
+10 - TBA - tab command can eliminate one or more spaces (or) standard input.
+
+11. man - to know more about a command and how to use it 
+
+12. cp - copy files 
+
+13. mv - move files
+we can also rename a file using mv command
+
+ex:- MV text new 
+ it renames test to now 
+
+14. locate - locate a file in a linux system 
+
+15. cat - list the contents of a file on the stand out put 
+
+16. cat - filename 
+
+17. grep- search the all the  text in a given file 
+`
+gerp filename 
+
+18. sudo(super user do)
+this command enables you to perform tasks thak require and ministiation or
+rook permissions 
+
+19.head- used to view the first lines of any text file 
+
+ex:- head-n 5 filename exit
+
+20.tail- it display the last ten lines of a text file 
+
+tail-n filename.exit 
+
+21. chomod- used to change the read , write, & execute permisstion of files & directories
+
+22. jobs -display all current jobs along with their stateges a job is basically a process 
+that is stared by the shell
+
+
+23. history- showing the history
+
+
+
+
+Security scan  (commands)
+.........................
+
+  sudo systemctl start sonar
+
+    sudo systemctl status sonar
+
+
+
+Scan Tool Installation Instructions
+...................................
+
+
+NMap
+........ 
+
+.Login as yourself and su to root
+
+.Update Ubuntu Package List. 
+
+ >sudo apt-get update
+ >sudo apt-get upgrade
+
+.Install Nmap
+
+>sudo apt-get install nmap
+
+.Verify Nmap Version Installed
+
+>nmap --version
+
+Zap Proxy (Pentest)
+.....................
+
+>Download latest version of Zap Proxy from OWASP website https://www.zaproxy.org/download/
+>Install Zaproxy following instructions at the website
+
+
+SonarQube
+..........
+
+>Download latest version of Sonarqube website https://www.sonarqube.org/downloads 
+>Install Sonarqube following instructions at the website
+>Install Java, Maven, Gradle build plugins
+
+SSL Labs
+..........
+
+.Navigate to https://www.ssllabs.com/ssltest/
+.Enter the URL to be scanned
+
+Security Headers
+.................
+
+.Navigate to https://securityheaders.com/ 
+.Enter the URL to be scanned
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
